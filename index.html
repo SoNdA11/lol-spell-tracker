@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoL Spell Tracker</title>
+    
+    <!-- Google Fonts: Cinzel (títulos) e Roboto (texto) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- Configurações Globais e Tema LoL (Hextech/Gold) --- */
+        :root {
+            --bg-color: #0A0A0A; /* Preto mais profundo */
+            --surface-color: #1a1a1a; /* Superfície (quase preto) */
+            --primary-text: #F0E6D2; /* Branco-pergaminho */
+            --secondary-text: #808080; /* Cinza para texto menor */
+            --accent-color: #C89B3C; /* Ouro LoL */
+            --danger-color: #CD2C2C; /* Vermelho */
+            --success-color: #238636; /* Verde */
+            --border-color: #463714; /* Borda (Ouro escuro/Bronze) */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            line-height: 1.6;
+            overscroll-behavior-y: contain; 
+        }
+
+        #app {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0.5rem; 
+        }
+
+        h1, h2, h3 {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        button {
+            font-size: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s ease;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        button:active {
+            opacity: 0.8;
+        }
+
+        /* --- Controle das Telas --- */
+        .screen { display: none; }
+        .screen.active { display: block; }
+        
+        /* --- Tela 1: Setup --- */
+        #setup-screen h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .lane {
+            background: var(--surface-color);
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .lane h2 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .spell-selects {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .spell-select {
+            width: 48%;
+            background: #111;
+            color: var(--primary-text);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem;
+            font-size: 1rem;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23C89B3C' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1em;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        #start-tracker-btn {
+            display: block;
+            width: 100%;
+            background-color: var(--accent-color);
+            color: #111;
+            border-color: var(--accent-color);
+            margin-top: 1rem;
+        }
+
+        /* --- Tela 2: Tracker --- */
+        #tracker-screen header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        #tracker-screen h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0;
+        }
+
+        #reset-btn {
+            background: var(--danger-color);
+            color: var(--primary-text);
+            border-color: var(--danger-color);
+            padding: 0.5rem 1rem;
+        }
+
+        #tracker-grid {
+            display: grid;
+            gap: 0.5rem; 
+        }
+
+        .lane-tracker {
+            background: var(--surface-color);
+            border-radius: 4px;
+            padding: 0.5rem; 
+            border: 1px solid var(--border-color);
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between;
+        }
+
+        .lane-tracker h3 {
+            font-size: 1.1rem; 
+            margin-bottom: 0; 
+            text-align: left;
+            flex-basis: 50px; 
+            flex-shrink: 0;
+            padding-left: 0.25rem;
+        }
+
+        .spell-timers {
+            display: flex;
+            justify-content: space-around;
+            gap: 0.5rem; 
+            flex-grow: 1; 
+        }
+
+        .spell-timer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100px; 
+        }
+
+        .spell-icon-wrapper {
+            position: relative;
+            width: 70px; 
+            height: 70px; 
+            cursor: pointer;
+            border-radius: 4px;
+            overflow: hidden; 
+            border: 2px solid var(--border-color);
+        }
+
+        .spell-icon-wrapper img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            transition: filter 0.3s ease;
+        }
+
+        .timer-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            color: white;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            border-radius: 2px;
+        }
+        
+        .timer-text {
+            font-size: 1.75rem; 
+            font-weight: bold;
+            text-shadow: 1px 1px 2px black;
+            pointer-events: none; 
+            color: white;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        /* Botão de Reset Individual */
+        .reset-spell-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 20px; 
+            height: 20px; 
+            padding: 0;
+            font-size: 0.9rem; 
+            line-height: 1;
+            background: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            opacity: 0.7;
+            z-index: 10;
+            border: 1px solid var(--danger-color);
+        }
+        .reset-spell-btn:hover {
+            opacity: 1;
+        }
+
+        .spell-timer.on-cooldown .spell-icon-wrapper {
+            border-color: var(--danger-color);
+            cursor: default; 
+        }
+        
+        .spell-timer.on-cooldown .timer-overlay {
+            display: flex; 
+        }
+
+        .spell-timer.on-cooldown img {
+            filter: grayscale(100%) brightness(0.5); 
+        }
+
+        /* Seletor de Haste */
+        .haste-select {
+            width: 100%;
+            margin-top: 0.25rem; 
+            background: #111;
+            color: var(--primary-text);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem; 
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23C89B3C' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.25rem center;
+            background-size: 0.8em;
+            cursor: pointer;
+            text-align: center;
+            font-family: 'Roboto', sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <!-- ========================== -->
+        <!--      TELA 1: SETUP         -->
+        <!-- ========================== -->
+        <section id="setup-screen" class="screen active">
+            <h1>Configurar Oponentes</h1>
+            
+            <div id="setup-form">
+                <!-- O JS vai popular os 'selects' aqui -->
+            </div>
+
+            <button id="start-tracker-btn">Iniciar Tracker</button>
+        </section>
+
+        <!-- ========================== -->
+        <!--      TELA 2: TRACKER       -->
+        <!-- ========================== -->
+        <section id="tracker-screen" class="screen">
+            <header>
+                <h1>Rastreador</h1>
+                <button id="reset-btn">Resetar Partida</button>
+            </header>
+
+            <main id="tracker-grid">
+                <!-- O JS vai popular o grid de rastreamento aqui -->
+            </main>
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Banco de Dados de Feitiços ---
+            // Formula: Base * (100 / (100 + Haste))
+            // Haste: 0 (base), 10 (boots), 18 (cosmic), 28 (both)
+            // Usando Math.round() para segundos inteiros.
+            const SPELL_DATA = {
+                'SummonerFlash': { 
+                    id: 'SummonerFlash', name: 'Flash', 
+                    base: 300, 
+                    boots: 273,  // 300 * (100/110)
+                    cosmic: 254, // 300 * (100/118)
+                    both: 234     // 300 * (100/128)
+                },
+                'SummonerHeal': { 
+                    id: 'SummonerHeal', name: 'Curar', 
+                    base: 240, 
+                    boots: 218, 
+                    cosmic: 203, 
+                    both: 188 
+                },
+                'SummonerDot': { 
+                    id: 'SummonerDot', name: 'Incendiar', 
+                    base: 180, 
+                    boots: 164, 
+                    cosmic: 153, 
+                    both: 141 
+                },
+                'SummonerTeleport': { 
+                    id: 'SummonerTeleport', name: 'Teleporte', 
+                    base: 360, 
+                    boots: 327, 
+                    cosmic: 305, 
+                    both: 281 
+                },
+                'SummonerExhaust': { 
+                    id: 'SummonerExhaust', name: 'Exaustão', 
+                    base: 210, 
+                    boots: 191, 
+                    cosmic: 178, 
+                    both: 164 
+                },
+                'SummonerBarrier': { 
+                    id: 'SummonerBarrier', name: 'Barreira', 
+                    base: 180, 
+                    boots: 164, 
+                    cosmic: 153, 
+                    both: 141 
+                },
+                'SummonerSmite': { // Smite não é afetado por Spell Haste
+                    id: 'SummonerSmite', name: 'Golpear', 
+                    base: 90, 
+                    boots: 90, 
+                    cosmic: 90, 
+                    both: 90 
+                },
+                'SummonerHaste': { 
+                    id: 'SummonerHaste', name: 'Fantasma', 
+                    base: 210, 
+                    boots: 191, 
+                    cosmic: 178, 
+                    both: 164 
+                },
+                'SummonerBoost': { 
+                    id: 'SummonerBoost', name: 'Purificar', 
+                    base: 210, 
+                    boots: 191, 
+                    cosmic: 178, 
+                    both: 164 
+                }
+            };
+
+            // --- Constantes ---
+            const PATCH_VERSION = '15.10.1'; // Versão de meados de 2025 (para ícones novos)
+            const SPELL_CDN_URL = `https://ddragon.leagueoflegends.com/cdn/${PATCH_VERSION}/img/spell/`;
+            const LANES = ['TOP', 'JG', 'MID', 'ADC', 'SUP'];
+
+            // --- Armazenamento de Estado ---
+            let laneConfigurations = {}; 
+            let activeTimers = {}; 
+
+            // --- Seletores de DOM ---
+            const setupScreen = document.getElementById('setup-screen');
+            const trackerScreen = document.getElementById('tracker-screen');
+            const startTrackerBtn = document.getElementById('start-tracker-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const trackerGrid = document.getElementById('tracker-grid');
+            const setupForm = document.getElementById('setup-form');
+
+            // --- Funções Principais ---
+
+            function init() {
+                populateSetupForm();
+                addEventListeners();
+            }
+
+            function populateSetupForm() {
+                let formHTML = '';
+                const spellOptions = generateSpellOptions();
+
+                for (const lane of LANES) {
+                    formHTML += `
+                        <div class="lane">
+                            <h2>${lane}</h2>
+                            <div class="spell-selects">
+                                <select class="spell-select" data-lane="${lane.toLowerCase()}" data-spell-index="0">
+                                    <option value="">-- Feitiço 1 --</option>
+                                    ${spellOptions}
+                                </select>
+                                <select class="spell-select" data-lane="${lane.toLowerCase()}" data-spell-index="1">
+                                    <option value="">-- Feitiço 2 --</option>
+                                    ${spellOptions}
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                }
+                setupForm.innerHTML = formHTML;
+            }
+
+            function generateSpellOptions() {
+                return Object.values(SPELL_DATA)
+                    .map(spell => `<option value="${spell.id}">${spell.name}</option>`)
+                    .join('');
+            }
+
+            function addEventListeners() {
+                startTrackerBtn.addEventListener('click', startGame);
+                resetBtn.addEventListener('click', resetGame);
+                
+                trackerGrid.addEventListener('click', handleTrackerClick);
+            }
+
+            function startGame() {
+                laneConfigurations = {};
+                const selects = document.querySelectorAll('.spell-select');
+
+                for (const select of selects) {
+                    const { lane, spellIndex } = select.dataset;
+                    if (!laneConfigurations[lane]) {
+                        laneConfigurations[lane] = [];
+                    }
+                    laneConfigurations[lane][spellIndex] = select.value;
+                }
+
+                buildTrackerUI();
+
+                setupScreen.classList.remove('active');
+                trackerScreen.classList.add('active');
+            }
+
+            function buildTrackerUI() {
+                trackerGrid.innerHTML = ''; 
+                
+                for (const lane of LANES) {
+                    const laneKey = lane.toLowerCase();
+                    const spells = laneConfigurations[laneKey] || [];
+                    const spell1_id = spells[0];
+                    const spell2_id = spells[1];
+
+                    const laneTrackerHTML = `
+                        <div class="lane-tracker" data-lane="${laneKey}">
+                            <h3>${lane}</h3>
+                            <div class="spell-timers">
+                                ${generateSpellTimerHTML(laneKey, 0, spell1_id)}
+                                ${generateSpellTimerHTML(laneKey, 1, spell2_id)}
+                            </div>
+                        </div>
+                    `;
+                    trackerGrid.innerHTML += laneTrackerHTML;
+                }
+            }
+
+            function generateSpellTimerHTML(lane, index, spellId) {
+                if (!spellId || !SPELL_DATA[spellId]) {
+                    return `<div class="spell-timer" style="opacity: 0.2;"><div class="spell-icon-wrapper" style="background: #333; border-color: #444;"></div><select class="haste-select" style="visibility: hidden;"><option>Base</option></select></div>`;
+                }
+
+                const spell = SPELL_DATA[spellId];
+                const iconUrl = `${SPELL_CDN_URL}${spell.id}.png`;
+
+                return `
+                    <div class="spell-timer" data-lane="${lane}" data-spell-index="${index}" data-spell-id="${spellId}">
+                        <div class="spell-icon-wrapper">
+                            <img src="${iconUrl}" alt="${spell.name}">
+                            <div class="timer-overlay">
+                                <span class="timer-text"></span>
+                                <button class="reset-spell-btn" title="Resetar Feitiço">✖</button>
+                            </div>
+                        </div>
+                        <select class="haste-select">
+                            <option value="base">Base (0)</option>
+                            <option value="boots">Bota (+10)</option>
+                            <option value="cosmic">Runa (+18)</option>
+                            <option value="both">Ambos (+28)</option>
+                        </select>
+                    </div>
+                `;
+            }
+
+            function handleTrackerClick(e) {
+                // VERIFICA PRIMEIRO O RESET: O usuário clicou no botão '✖'?
+                const resetSpellBtn = e.target.closest('.reset-spell-btn');
+                if (resetSpellBtn) {
+                    const spellTimerEl = resetSpellBtn.closest('.spell-timer');
+                    stopTimer(spellTimerEl); // Chama a nova função de parar
+                    return; // Para a execução
+                }
+
+                // DEPOIS VERIFICA O INÍCIO: O usuário clicou no ícone?
+                const iconWrapper = e.target.closest('.spell-icon-wrapper');
+                if (!iconWrapper) return; // Sai se não foi no ícone
+
+                const spellTimerEl = iconWrapper.closest('.spell-timer');
+                
+                // Não inicia se o timer já está ativo ou se o elemento é inválido
+                if (!spellTimerEl || spellTimerEl.classList.contains('on-cooldown')) {
+                    return;
+                }
+
+                // Inicia o temporizador
+                startTimer(spellTimerEl);
+            }
+
+            /**
+             * Inicia um temporizador de contagem regressiva (v2)
+             */
+            function startTimer(spellTimerEl) {
+                const { lane, spellIndex, spellId } = spellTimerEl.dataset;
+                const spell = SPELL_DATA[spellId];
+
+                // Pega o valor do NOVO seletor de haste
+                const hasteSelect = spellTimerEl.querySelector('.haste-select');
+                const hasteLevel = hasteSelect.value; // 'base', 'boots', 'cosmic', ou 'both'
+
+                // Pega o cooldown correspondente do nosso banco de dados
+                let countdown = spell[hasteLevel];
+                
+                const timerKey = `${lane}-${spellIndex}`; 
+
+                if (activeTimers[timerKey]) {
+                    clearInterval(activeTimers[timerKey]);
+                }
+
+                spellTimerEl.classList.add('on-cooldown');
+                const timerText = spellTimerEl.querySelector('.timer-text');
+                timerText.textContent = countdown; // Alvo é o span
+
+                activeTimers[timerKey] = setInterval(() => {
+                    countdown--;
+                    timerText.textContent = countdown;
+
+                    if (countdown <= 0) {
+                        stopTimer(spellTimerEl); // Usa a função stopTimer para limpar
+                    }
+                }, 1000); 
+            }
+
+            /**
+             * Para um temporizador individual
+             */
+            function stopTimer(spellTimerEl) {
+                if (!spellTimerEl) return;
+                
+                const { lane, spellIndex } = spellTimerEl.dataset;
+                const timerKey = `${lane}-${spellIndex}`;
+
+                // 1. Limpa o intervalo
+                if (activeTimers[timerKey]) {
+                    clearInterval(activeTimers[timerKey]);
+                    delete activeTimers[timerKey];
+                }
+
+                // 2. Reseta a UI
+                spellTimerEl.classList.remove('on-cooldown');
+                const timerText = spellTimerEl.querySelector('.timer-text');
+                if (timerText) {
+                    timerText.textContent = '';
+                }
+            }
+
+
+            /**
+             * Reseta o jogo, limpa timers e volta para a Tela 1
+             */
+            function resetGame() {
+                // 1. Limpa todos os intervalos ativos
+                for (const timerId of Object.values(activeTimers)) {
+                    clearInterval(timerId);
+                }
+                activeTimers = {};
+
+                // 2. Limpa o grid da UI (aqui não precisamos do stopTimer individual)
+                trackerGrid.innerHTML = '';
+
+                // 3. Limpa os seletores na Tela 1
+                document.querySelectorAll('.spell-select').forEach(sel => sel.value = '');
+
+                // 4. Troca as telas
+                trackerScreen.classList.remove('active');
+                setupScreen.classList.add('active');
+            }
+
+            // --- Inicia o aplicativo ---
+            init();
+
+        });
+    </script>
+
+</body>
+</html>
